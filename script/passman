@@ -30,6 +30,15 @@ def color(color:str,context:str):
     else :
         return context
 
+def get_password(des:str):
+    while True:
+        password = getpass(des)
+        again = getpass("Type again:\t")
+        if password == again:
+            return password
+        else:
+            print(color("yellow","Please make sure whether you type right"))
+
 def enc(rew:str,pwd:str):
     cmd = f"echo '{rew}' | openssl aes-256-cbc -a -salt -pbkdf2 -pass pass:{pwd}"
     result = run(cmd)
@@ -67,8 +76,7 @@ def get_input():
             break
         print(color("yellow","you MUST input this"))
     while True:
-        password = getpass("your password:\t")
-        print(password)
+        password = get_password("your password:\t")
         if password:
             break
         print(color("yellow","you MUST input this"))
@@ -78,7 +86,7 @@ def get_input():
     enable_enc = input("Whether enable encipher?")
     if enable_enc == "y" or enable_enc == "yes":
         while True:
-            pwd = getpass("enc password:\t")
+            pwd = get_password("enc password:\t")
             if pwd:
                 break
             print(color("yellow","you MUST input this"))
@@ -97,7 +105,7 @@ def list_table(table):
 
 def read():
     table = get_table()
-    pwd = getpass("tell me your enc_pwd:")
+    pwd = get_password("tell me your enc_pwd:")
     list_table(table)
     index = int(input("tell me what you want to show:"))
     if pwd:
@@ -124,7 +132,7 @@ def update():
             break
         print(color("yellow","you MUST input this"))
     while True:
-        password = getpass("your password:\t")
+        password = get_password("your password:\t")
         print(password)
         if password:
             break
@@ -132,7 +140,7 @@ def update():
     enable_enc = input("Whether enable encipher?")
     if enable_enc == "y" or enable_enc == "yes":
         while True:
-            pwd = getpass("enc password:\t")
+            pwd = get_password("enc password:\t")
             if pwd:
                 break
             print(color("yellow","you MUST input this"))

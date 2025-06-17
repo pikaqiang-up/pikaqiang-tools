@@ -100,9 +100,16 @@ def read():
     pwd = getpass("tell me your enc_pwd:")
     list_table(table)
     index = int(input("tell me what you want to show:"))
-    print(table[index]["app"] + "/" + table[index]["username"] + ":\n"
-          + "Account:" + denc(table[index]["account"],pwd) + "\n"
-          + "Password:" + denc(table[index]["password"],pwd))
+    if pwd:
+        print(table[index]["app"] + "/" + table[index]["username"] + ":\n"
+            + "Des:" + table[index]["des"] + "\n\n"
+            + "Account:" + denc(table[index]["account"],pwd) + "\n"
+            + "Password:" + denc(table[index]["password"],pwd))
+    else:
+        print(table[index]["app"] + "/" + table[index]["username"] + ":\n"
+            + "Des:" + table[index]["des"] + "\n\n"
+            + "Account:" + table[index]["account"] + "\n"
+            + "Password:" + table[index]["password"])
     sleep(5)
     os.system("clear")
 

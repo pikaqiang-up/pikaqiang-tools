@@ -1,0 +1,150 @@
+#!/usr/bin/env python3
+import os
+import subprocess
+import json
+from getpass import getpass
+from time import sleep
+
+
+def run(cmd):
+    return subprocess.run(
+            cmd,
+            text = True,
+            shell = True,
+            capture_output = True
+            )
+
+def color(color:str,context:str):
+    if color == "red":
+        return "\033[38;2;255;85;85m" + context + "\033[0m"
+    elif color == "green":
+        return "\033[38;2;80;250;123m" + context + "\033[0m"
+    elif color == "yellow":
+        return "\033[38;2;255;184;108m" + context + "\033[0m"
+    elif color == "blue":
+        return "\033[38;2;139;233;253m" + context + "\033[0m"
+    elif color == "purple":
+        return "\033[38;2;189;147;249m" + context + "\033[0m"
+    elif color == "pink":
+        return "\033[38;2;255;121;198m" + context + "\033[0m"
+    else :
+        return context
+
+def enc(rew:str,pwd:str):
+    cmd = f"echo '{rew}' | openssl aes-256-cbc -a -salt -pbkdf2 -pass pass:{pwd}"
+    result = run(cmd)
+    if result.returncode == 1:
+        raise Exception(color("yellow","Error:fail to encipher."))
+    return result.stdout.rstrip()
+
+def denc(rew:str,pwd:str):
+    cmd = f"echo '{rew}' | openssl aes-256-cbc -d -a -salt -pbkdf2 -pass pass:{pwd}"
+    result = run(cmd)
+    if result.returncode == 1:
+        raise Exception(color("yellow","Error:fail to dencipher or the password error."))
+    return result.stdout.rstrip()
+    
+
+def write_into(app:str,username:str,account:str,password:str,des:str,des2:str,des3:str):
+    cmd = f'sqlite3 pass.db "INSERT INTO password(app,username,account,password,des,des2,des3) VALUES(\'{app}\',\'{username}\',\'{account}\',\'{password}\',\'{des}\',\'{des2}\',\'{des3}\')"'
+    result = run(cmd)
+    if result.returncode == 1:
+        raise Exception(color("red","Fatal:cannot write data into datebase."))
+    print(color("green","Success"))
+
+def get_input():
+    while True:
+        app = input("app/website:\t")
+        if app:
+            break
+        print(color("yellow","you MUST input this"))
+    username = input("your nickname:\t")
+    if not username:
+        username = "unknow"
+    while True:
+        account = input("login account:\t")
+        if account:
+            break
+        print(color("yellow","you MUST input this"))
+    while True:
+        password = getpass("your password:\t")
+        print(password)
+        if password:
+            break
+        print(color("yellow","you MUST input this"))
+    des = input("1st Describe:\t")
+    des2 = input("2nd Describe:\t")
+    des3 = input("3rd Describe:\t")
+    enable_enc = input("Whether enable encipher?")
+    if enable_enc == "y" or enable_enc == "yes":
+        while True:
+            pwd = getpass("enc password:\t")
+            if pwd:
+                break
+            print(color("yellow","you MUST input this"))
+        return app,username,enc(account,pwd),enc(password,pwd),des,des2,des3
+    else:
+        return app,username,account,password,des,des2,des3
+
+def get_table():
+    table = run("sqlite3 pass.db --json 'SELECT * FROM password'")
+    return json.loads(table.stdout)
+
+def list_table(table):
+    for i in range(0,len(table)):
+        raw = table[i]
+        print(color("bule",str(i)) + "|" + raw["app"] + "/" + raw["username"])
+
+def read():
+    table = get_table()
+    pwd = getpass("tell me your enc_pwd:")
+    list_table(table)
+    index = int(input("tell me what you want to show:"))
+    print(table[index]["app"] + "/" + table[index]["username"] + ":\n"
+          + "Account:" + denc(table[index]["account"],pwd) + "\n"
+          + "Password:" + denc(table[index]["password"],pwd))
+    sleep(5)
+    os.system("clear")
+
+def update():
+    table = get_table()
+    list_table(table)
+    index = int(input("tell me what you want to change:"))
+    row_id = table[index]["id"]
+    while True:
+        account = input("login account:\t")
+        if account:
+            break
+        print(color("yellow","you MUST input this"))
+    while True:
+        password = getpass("your password:\t")
+        print(password)
+        if password:
+            break
+        print(color("yellow","you MUST input this"))
+    enable_enc = input("Whether enable encipher?")
+    if enable_enc == "y" or enable_enc == "yes":
+        while True:
+            pwd = getpass("enc password:\t")
+            if pwd:
+                break
+            print(color("yellow","you MUST input this"))
+        cmd = f"sqlite3 pass.db \"UPDATE password SET account='{enc(account,pwd)}', password='{enc(password,pwd)}' WHERE id = {row_id}\""
+    else:
+        cmd = f"sqlite3 pass.db \"UPDATE password SET account='{account}', password='{password}' WHERE id = {row_id}\""
+    result = run(cmd)
+    if result.returncode == 1:
+        raise Exception(color("yellow","Error:fail to option database."))
+    else:
+        print(color("green","Success"))
+    return result.stdout.rstrip()
+
+if __name__ == "__main__":
+    print("Welcome to NEO-passman")
+    mode = input("What to do?\ninput(1)(i)\tread(2)(r) or update(3)(u)\ntell me:")
+    if mode == "input" or mode == "1" or mode == "i":
+        write_into(*get_input())
+    elif mode == "read" or mode == "2" or mode == "r":
+        read()
+    elif mode == "updata" or mode == "3" or mode == "u":
+        update()

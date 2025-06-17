@@ -146,6 +146,7 @@ def update():
         print(color("green","Success"))
     return result.stdout.rstrip()
 
+
 if __name__ == "__main__":
     print("Welcome to NEO-passman")
     mode = input("What to do?\ninput(1)(i)\tread(2)(r) or update(3)(u)\ntell me:")
